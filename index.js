@@ -32,6 +32,11 @@ async function run() {
 
 
         //USER Related API
+        //read all users data
+        app.get('/users', async(req,res)=>{
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
         //create USER 
         app.post('/users',async(req,res)=>{
             const user = req.body;
