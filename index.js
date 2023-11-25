@@ -30,6 +30,7 @@ async function run() {
 
         const userCollection = client.db("fireflyDb").collection("users")
         const postCollection = client.db("fireflyDb").collection("posts")
+        const commentCollection = client.db("fireflyDb").collection("comments")
 
 
         //JWT related API
@@ -65,11 +66,38 @@ async function run() {
             }
             next();
         }
+        //POSTS related API
+        //getting all POSTS
+        app.get('/posts', async (req, res) => {
+            const result = await postCollection.find().toArray();
+            res.send(result);
+        })
+        //posting POSTS
+        app.post('/posts', verifyToken, async (req, res) => {
+            const post = req.body;
+            const result = await postCollection.insertOne(post);
+            res.send(result)
+        })
 
+        //getting POSTS data by query email
+        app.get('/posts',async(req,res)=>{
+            const email = req.query.email;
+            const query = {email:email};
+            const result = await postCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        //Delete a POST
+        app.delete('/posts/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)}
+            const result = await postCollection.deleteOne(query)
+            res.send(result);
+        })
 
 
         //USER Related API
-        //read all users data
+        //read all USERS data
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -100,7 +128,7 @@ async function run() {
             res.send(result)
         });
         //patch in USER data
-        app.patch('/users/admin/:id', async (req, res) => {
+        app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
@@ -112,7 +140,8 @@ async function run() {
             res.send(result);
         })
         //delete USER
-        app.delete('/users/:id', async (req, res) => {
+        //if get time i will add to client side
+        app.delete('/users/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await userCollection.deleteOne(query);
