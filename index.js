@@ -143,6 +143,18 @@ async function run() {
 
 
         //POSTS related API
+        //getting all POSTS
+        app.get('/posts', async (req, res) => {
+            const result = await postCollection.find().toArray();
+            res.send(result);
+        })
+        //getting POSTS data by tags
+        app.get('/posts/:tags', async (req, res) => {
+            const tags = req.params.tags;
+            const query = { tags: tags };
+            const result = await postCollection.find(query).toArray();
+            res.send(result);
+        })
         //getting POSTS data by email
         app.get('/posts', async (req, res) => {
             const email = req.query.email;
@@ -150,11 +162,10 @@ async function run() {
             const result = await postCollection.find(query).toArray();
             res.send(result);
         })
-        //getting all POSTS
-        app.get('/posts', async (req, res) => {
-            const result = await postCollection.find().toArray();
-            res.send(result);
-        })
+        
+       
+        
+        
         //posting POSTS
         app.post('/posts', verifyToken, async (req, res) => {
             const post = req.body;
