@@ -142,52 +142,41 @@ async function run() {
 
 
 
-        //POSTS related API
-        //getting all POSTS
-        app.get('/posts', async (req, res) => {
-            const result = await postCollection.find().toArray();
+        //POSTS related API 
+        // Getting POST data by id
+        app.get('/posts/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await postCollection.findOne(query);
             res.send(result);
-        })
-        //getting POSTS data by tags
+        });
+        // Getting POSTS data by tags and by id
         app.get('/posts/:tags', async (req, res) => {
             const tags = req.params.tags;
             const query = { tags: tags };
             const result = await postCollection.find(query).toArray();
             res.send(result);
-        })
-        //getting POSTS data by email
-        app.get('/posts', async (req, res) => {
-            const email = req.query.email;
-            const query = { authorEmail: email };
-            const result = await postCollection.find(query).toArray();
-            res.send(result);
-        })
-        
-       
-        
-        
-        //posting POSTS
-        app.post('/posts', verifyToken, async (req, res) => {
-            const post = req.body;
-            const result = await postCollection.insertOne(post);
-            res.send(result)
-        })
+        });
 
-        //getting POSTS data by query email
+        // Getting all POSTS or POSTS data by email
         app.get('/posts', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email };
-            const result = await postCollection.find(query).toArray();
-            res.send(result);
-        })
+            if (req.query.email) {
+                // If email parameter is present, filter by email
+                const email = req.query.email;
+                const query = { authorEmail: email };
+                const result = await postCollection.find(query).toArray();
+                res.send(result);
+            } else {
+                // Otherwise, get all posts
+                const result = await postCollection.find().toArray();
+                res.send(result);
+            }
+        });
 
-        //getting POST data by id
-        app.get('/posts/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await postCollection.findOne(query)
-            res.send(result);
-        })
+        
+
+        
+
 
         //Delete a POST
         app.delete('/posts/:id', async (req, res) => {
@@ -196,6 +185,48 @@ async function run() {
             const result = await postCollection.deleteOne(query)
             res.send(result);
         })
+
+        //getting POSTS data by query email
+        // app.get('/posts', async (req, res) => {
+        //     const email = req.query.email;
+        //     const query = { email: email };
+        //     const result = await postCollection.find(query).toArray();
+        //     res.send(result);
+        // })
+        //getting all POSTS
+        // app.get('/posts', async (req, res) => {
+        //     const result = await postCollection.find().toArray();
+        //     res.send(result);
+        // })
+        // //getting POSTS data by tags
+        // app.get('/posts/:tags', async (req, res) => {
+        //     const tags = req.params.tags;
+        //     const query = { tags: tags };
+        //     const result = await postCollection.find(query).toArray();
+        //     res.send(result);
+        // })
+        // //getting POSTS data by email
+        // app.get('/posts', async (req, res) => {
+        //     const email = req.query.email;
+        //     const query = { authorEmail: email };
+        //     const result = await postCollection.find(query).toArray();
+        //     res.send(result);
+        // })
+
+        // //getting POST data by id
+        // app.get('/posts/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const query = { _id: new ObjectId(id) }
+        //     const result = await postCollection.findOne(query)
+        //     res.send(result);
+        // })
+
+        // //posting POSTS
+        // app.post('/posts', verifyToken, async (req, res) => {
+        //     const post = req.body;
+        //     const result = await postCollection.insertOne(post);
+        //     res.send(result)
+        // })
 
 
 
