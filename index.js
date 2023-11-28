@@ -68,7 +68,7 @@ async function run() {
         }
 
         //TAGS related APIs
-        app.get('/tags',async(req,res)=>{
+        app.get('/tags', async (req, res) => {
             const result = await tagCollection.find().toArray();
             res.send(result);
         })
@@ -158,6 +158,8 @@ async function run() {
 
         //POSTS related API 
 
+
+
         // Getting POST data by id
         app.get('/posts/:id', async (req, res) => {
             const id = req.params.id;
@@ -169,7 +171,14 @@ async function run() {
 
         // Getting all POSTS or POSTS data by email
         app.get('/posts', async (req, res) => {
-            if (req.query.tags) {
+            if (req.query.page && req.query.size) {
+                const page = parseInt(req.query.page);
+                const size = parseInt(req.query.size);
+                console.log(page, size);
+                const result = await postCollection.find().skip(page * size).limit(size).toArray();
+                res.send(result)
+            }
+            else if (req.query.tags) {
                 const tags = req.query.tags;
                 const query = { tags: tags };
                 const result = await postCollection.find(query).toArray();
@@ -181,11 +190,16 @@ async function run() {
                 const result = await postCollection.find(query).toArray();
                 res.send(result);
             } else {
-
                 const result = await postCollection.find().toArray();
                 res.send(result);
             }
         });
+
+        //Get POSTS count for PAGINATION
+        app.get('/postsCount', async (req, res) => {
+            const count = await postCollection.estimatedDocumentCount();
+            res.send({ count });
+        })
 
         //posting POSTS
         app.post('/posts', verifyToken, async (req, res) => {
