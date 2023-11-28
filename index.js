@@ -30,6 +30,8 @@ async function run() {
         const postCollection = client.db("fireflyDb").collection("posts")
         const commentCollection = client.db("fireflyDb").collection("comments")
         const announcementCollection = client.db("fireflyDb").collection("announcements")
+        const tagCollection = client.db("fireflyDb").collection("tags")
+
 
         //JWT related API
         app.post('/jwt', async (req, res) => {
@@ -65,12 +67,26 @@ async function run() {
             next();
         }
 
-        //USER Related API
-        //read all USERS data
-        app.get('/users', verifyToken, async (req, res) => {
-            const result = await userCollection.find().toArray();
+        //TAGS related APIs
+        app.get('/tags',async(req,res)=>{
+            const result = await tagCollection.find().toArray();
             res.send(result);
-        });
+        })
+        //USER Related API      
+
+        // getting user by Name and all
+        app.get('/users', async (req, res) => {
+            if (req.query.name) {
+                const name = req.query.name;
+                const query = { name: name };
+                const result = await userCollection.find(query).toArray();
+                res.send(result);
+            } else {
+                const result = await userCollection.find().toArray();
+                res.send(result);
+            }
+        })
+
         //getting Users data by email
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -141,6 +157,7 @@ async function run() {
 
 
         //POSTS related API 
+
         // Getting POST data by id
         app.get('/posts/:id', async (req, res) => {
             const id = req.params.id;
@@ -148,24 +165,23 @@ async function run() {
             const result = await postCollection.findOne(query);
             res.send(result);
         });
-        // Getting POSTS data by tags and by id
-        app.get('/posts/:tags', async (req, res) => {
-            const tags = req.params.tags;
-            const query = { tags: tags };
-            const result = await postCollection.find(query).toArray();
-            res.send(result);
-        });
+
 
         // Getting all POSTS or POSTS data by email
         app.get('/posts', async (req, res) => {
-            if (req.query.email) {
-                // If email parameter is present, filter by email
+            if (req.query.tags) {
+                const tags = req.query.tags;
+                const query = { tags: tags };
+                const result = await postCollection.find(query).toArray();
+                res.send(result);
+            }
+            else if (req.query.email) {
                 const email = req.query.email;
                 const query = { authorEmail: email };
                 const result = await postCollection.find(query).toArray();
                 res.send(result);
             } else {
-                // Otherwise, get all posts
+
                 const result = await postCollection.find().toArray();
                 res.send(result);
             }
@@ -193,7 +209,7 @@ async function run() {
                     downVoteBy: updateItem.downVoteBy,
                 }
             }
-            const result = await postCollection.updateOne(filter, updatedDoc,options);
+            const result = await postCollection.updateOne(filter, updatedDoc, options);
             res.send(result)
         })
 
@@ -238,6 +254,13 @@ async function run() {
             }
             const result = await commentCollection.updateOne(filter, updatedDoc);
             res.send(result)
+        })
+        //Delete a COMMENT
+        app.delete('/comments/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await commentCollection.deleteOne(query)
+            res.send(result);
         })
 
         //getting POSTS data by query email
