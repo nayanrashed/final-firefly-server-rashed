@@ -9,8 +9,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
-
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.oz2ylzg.mongodb.net/?retryWrites=true&w=majority  `;
 
@@ -129,7 +127,7 @@ async function run() {
         })
 
         // ANNOUNCEMENT related API
-        app.get('announcements', async (req, res) => {
+        app.get('/announcements', async (req, res) => {
             const result = await announcementCollection.find().toArray();
             res.send(result);
         })
@@ -173,10 +171,31 @@ async function run() {
             }
         });
 
-        
+        //posting POSTS
+        app.post('/posts', verifyToken, async (req, res) => {
+            const post = req.body;
+            const result = await postCollection.insertOne(post);
+            res.send(result)
+        })
 
-        
 
+        //patching a POST
+        app.patch('/posts/:id', async (req, res) => {
+            const updateItem = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    upVote: updateItem.upVote,
+                    upVoteBy: updateItem.upVoteBy,
+                    downVote: updateItem.downVote,
+                    downVoteBy: updateItem.downVoteBy,
+                }
+            }
+            const result = await postCollection.updateOne(filter, updatedDoc,options);
+            res.send(result)
+        })
 
         //Delete a POST
         app.delete('/posts/:id', async (req, res) => {
@@ -184,6 +203,41 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await postCollection.deleteOne(query)
             res.send(result);
+        })
+
+
+        //COMMENTS Related API
+        // getting all comments
+        app.get('/comments', async (req, res) => {
+            const result = await commentCollection.find().toArray();
+            res.send(result);
+        })
+        // Getting POSTS data by tags and by id
+        app.get('/comments/:postId', async (req, res) => {
+            const postId = req.params.postId;
+            const query = { postId: postId };
+            const result = await commentCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        //posting COMMENTS
+        app.post('/comments', verifyToken, async (req, res) => {
+            const comment = req.body;
+            const result = await commentCollection.insertOne(comment);
+            res.send(result)
+        })
+        //patching a COMMENTS by ID
+        app.patch('/comments/:id', async (req, res) => {
+            const updateItem = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    report: updateItem.report,
+                }
+            }
+            const result = await commentCollection.updateOne(filter, updatedDoc);
+            res.send(result)
         })
 
         //getting POSTS data by query email
@@ -221,12 +275,7 @@ async function run() {
         //     res.send(result);
         // })
 
-        // //posting POSTS
-        // app.post('/posts', verifyToken, async (req, res) => {
-        //     const post = req.body;
-        //     const result = await postCollection.insertOne(post);
-        //     res.send(result)
-        // })
+
 
 
 
