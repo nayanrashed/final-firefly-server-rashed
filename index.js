@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 //middlewares
@@ -31,6 +32,8 @@ async function run() {
         const commentCollection = client.db("fireflyDb").collection("comments")
         const announcementCollection = client.db("fireflyDb").collection("announcements")
         const tagCollection = client.db("fireflyDb").collection("tags")
+        const paymentCollection = client.db("fireflyDb").collection("payments")
+
 
 
         //JWT related API
@@ -154,11 +157,7 @@ async function run() {
             res.send(result)
         })
 
-
-
         //POSTS related API 
-
-
 
         // Getting POST data by id
         app.get('/posts/:id', async (req, res) => {
@@ -168,13 +167,12 @@ async function run() {
             res.send(result);
         });
 
-
         // Getting all POSTS or POSTS data by email
         app.get('/posts', async (req, res) => {
             if (req.query.page && req.query.size) {
                 const page = parseInt(req.query.page);
                 const size = parseInt(req.query.size);
-                console.log(page, size);
+                // console.log(page, size);
                 const result = await postCollection.find().skip(page * size).limit(size).toArray();
                 res.send(result)
             }
@@ -275,6 +273,28 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await commentCollection.deleteOne(query)
             res.send(result);
+        })
+
+        //PAYMENT Intent
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100);
+            // console.log("amount inside ", amount);
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
+        })
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const paymentResult = await paymentCollection.insertOne(payment);
+            res.send(paymentResult)
         })
 
         //getting POSTS data by query email
