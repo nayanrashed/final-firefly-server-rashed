@@ -75,6 +75,16 @@ async function run() {
             const result = await tagCollection.find().toArray();
             res.send(result);
         })
+// adding a TAG item
+        app.post('/tags', verifyToken, async (req, res) => {
+            const item = req.body;
+            const result = await tagCollection.insertOne(item);
+            res.send(result)
+        })
+
+
+
+
         //USER Related API      
 
         // getting user by Name and all
@@ -124,13 +134,25 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result)
         });
-        //patch in USER data
+        //patch in USER data: make ADMIN
         app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
                 $set: {
                     role: 'admin'
+                }
+            }
+            const result = await userCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+        //patch in USER data: update BADGE
+        app.patch('/users/badge/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updatedDoc = {
+                $set: {
+                    badge: 'gold'
                 }
             }
             const result = await userCollection.updateOne(filter, updatedDoc);
@@ -173,6 +195,7 @@ async function run() {
                 const page = parseInt(req.query.page);
                 const size = parseInt(req.query.size);
                 // console.log(page, size);
+
                 const result = await postCollection.find().skip(page * size).limit(size).toArray();
                 res.send(result)
             }
@@ -295,6 +318,29 @@ async function run() {
             const payment = req.body;
             const paymentResult = await paymentCollection.insertOne(payment);
             res.send(paymentResult)
+        })
+
+        //STATS
+
+        app.get('/admin-stats', async (req, res) => {
+            const users = await userCollection.estimatedDocumentCount();
+            const totalPosts = await postCollection.estimatedDocumentCount();
+            const paymentsCount = await paymentCollection.estimatedDocumentCount();
+            const commentsCount = await commentCollection.estimatedDocumentCount();
+            const result = await paymentCollection.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: {
+                            $sum: '$price'
+                        }
+                    }
+                }
+            ]).toArray();
+            const revenue = result.length > 0 ? result[0].totalRevenue : 0;
+
+
+            res.send({ users, totalPosts, paymentsCount, commentsCount, revenue })
         })
 
         //getting POSTS data by query email
