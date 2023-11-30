@@ -75,8 +75,8 @@ async function run() {
             const result = await tagCollection.find().toArray();
             res.send(result);
         })
-// adding a TAG item
-        app.post('/tags', verifyToken, async (req, res) => {
+        // adding a TAG item
+        app.post('/tags', verifyToken,verifyAdmin, async (req, res) => {
             const item = req.body;
             const result = await tagCollection.insertOne(item);
             res.send(result)
